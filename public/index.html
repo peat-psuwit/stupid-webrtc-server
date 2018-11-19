@@ -54,6 +54,16 @@
           console.log('Get remote tracks: ', streams);
           remoteVideo.srcObject = streams[0];
         });
+
+        peerConnection.addEventListener('iceconnectionstatechange', () => {
+          if (peerConnection && (
+            peerConnection.iceConnectionState === "failed" ||
+            peerConnection.iceConnectionState === "disconnected" ||
+            peerConnection.iceConnectionState === "closed"
+          )) {
+            hangup();  
+          }
+        });
       }
 
       function initiateCall() {
