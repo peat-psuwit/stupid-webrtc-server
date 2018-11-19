@@ -67,6 +67,19 @@ io.on('connection', (socket) => {
     caller.emit('answer', { calleeId: selfId, sdp });
   });
 
+  socket.on('reject', ({ callerId }) => {
+    console.log(`${selfId} reject ${callerId}`);
+
+    const caller = socketMap[callerId];
+
+    if (!caller) {
+      socket.emit('failure', { error: 'No caller' });
+      return;
+    }
+
+    caller.emit('failure', { error: 'Callee reject the call' });
+  });
+
   socket.on('ice', ({ peerId, candidate }) => {
     console.log(`${selfId} ice ${peerId}`);
 
