@@ -10,17 +10,26 @@
     </div>
 
     <div>
+      My caller id: <span id="selfId"></span>
+    </div>
+
+    <div>
+      <input type="text" id="calleeId" />
       <button id="call">Initiate call</button>
     </div>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="socket.io/socket.io.js"></script>
 
     <script>
       const localVideo = document.getElementById('localVideo');
       const remoteVideo = document.getElementById('remoteVideo');
+      const selfIdSpan = document.getElementById('selfId');
+      const calleeIdInput = document.getElementById('calleeId');
       const callBtn = document.getElementById('call');
 
       let peerConnection;
+      let currentPeerId;
 
       function createPeerConnection() {
         peerConnection = new RTCPeerConnection({
@@ -46,6 +55,13 @@
       }
 
       function initiateCall() {
+        const calleeId = calleeIdInput.value;
+        if (calleeId.length !== 8) {
+          alert('CalleeId must be 8 char long');
+          return Promise.reject();
+        }
+
+        currentPeerId = calleeId;
         return navigator.mediaDevices.getUserMedia({
           audio : true,
           video : true,
@@ -115,36 +131,52 @@
         peerConnection.setRemoteDescription(answerSDP);
       }
 
-      function POSTIce(candidate) {
-        // Stub
-        console.log(`RPC: onICECandidateReceived(${JSON.stringify(candidate)})`);
-      }
+      const socket = io();
 
-      function POSTOfferSDP(sdp) {
-        // Stub
-        console.log(`RPC: onRemoteDescRecieved(${JSON.stringify(sdp)})`);
-      }
+      socket.on('connected', ({ selfId }) => {
+        selfIdSpan.textContent = selfId;
+      });
 
-      function POSTAnswerSDP(sdp) {
-        // Stub
-        console.log(`RPC: onRemoteDescRecieved(${JSON.stringify(sdp)})`);
-      }
-
-      function onRemoteDescRecieved(SDP) {
-        if (!peerConnection) {
-          return answerCall(SDP);
-        } else {
-          return acceptAnswer(SDP);
+      socket.on('ring', ({ callerId, sdp }) => {
+        if (peerConnection) {
+          socket.emit('reject', { callerId });
         }
-      }
 
-      function onICECandidateReceived(candidate) {
-        if (!peerConnection) {
-          console.error('Answer received at incorrect time.');
+        currentPeerId = callerId;
+        answerCall(sdp);
+      });
+
+      socket.on('answer', ({ calleeId, sdp }) => {
+        if (currentPeerId !== calleeId) {
+          console.error('Answer received at an invalid state.');
+        }
+
+        acceptAnswer(sdp);
+      });
+
+      socket.on('ice', ({ peerId, candidate }) => {
+        if (!peerConnection || currentPeerId !== peerId) {
+          console.error('ICE received at incorrect time.');
           return;
         }
 
-        return peerConnection.addIceCandidate(candidate);
+        peerConnection.addIceCandidate(candidate);
+      });
+
+      socket.on('failure', ({ error }) => {
+        console.error(error);
+      });
+
+      function POSTIce(candidate) {
+        socket.emit('ice', { peerId: currentPeerId, candidate });
+      }
+
+      function POSTOfferSDP(sdp) {
+        socket.emit('call', { calleeId: currentPeerId, sdp });
+      }
+
+      function POSTAnswerSDP(sdp) {
+        socket.emit('answer', { callerId: currentPeerId, sdp });
       }
 
       callBtn.addEventListener('click', initiateCall);
