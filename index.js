@@ -10,6 +10,10 @@ const basePath = `${__dirname}/public`;
 // https://stackoverflow.com/questions/28061080/node-itself-can-serve-static-files-without-express-or-any-other-module
 const httpServer = http.createServer(function(req, res) {
     let url = req.url;
+    let qPos;
+    if (qPos = url.indexOf('?')) {
+      url = url.substring(0, qPos);
+    }
     if (url.endsWith('/')) {
       url += 'index.html';
     }
