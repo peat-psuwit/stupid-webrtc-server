@@ -1,0 +1,153 @@
+<html>
+  <head>
+    <title>WebRTC lab 2</title>
+  </head>
+
+  <body>
+    <div style="width: 100%; display:flex; flex-direction: row;">
+      <video id="localVideo" autoplay style="flex: 1;"></video>
+      <video id="remoteVideo" autoplay style="flex: 1;"></video>
+    </div>
+
+    <div>
+      <button id="call">Initiate call</button>
+    </div>
+
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+    <script>
+      const localVideo = document.getElementById('localVideo');
+      const remoteVideo = document.getElementById('remoteVideo');
+      const callBtn = document.getElementById('call');
+
+      let peerConnection;
+
+      function createPeerConnection() {
+        peerConnection = new RTCPeerConnection({
+          iceServers : [
+            { url : "stun:stun.l.google.com:19302" },
+          ],
+        });
+
+        peerConnection.addEventListener('icecandidate', (event) => {
+          const { candidate } = event;
+          if (!candidate) return;
+
+          console.log('Get local candidate: ', candidate);
+          POSTIce(candidate);
+        });
+
+        peerConnection.addEventListener('track', (event) => {
+          const { streams } = event;
+
+          console.log('Get remote tracks: ', streams);
+          remoteVideo.srcObject = streams[0];
+        });
+      }
+
+      function initiateCall() {
+        return navigator.mediaDevices.getUserMedia({
+          audio : true,
+          video : true,
+        }).then((stream) => {
+          console.log('getUserMedia successful');
+          localVideo.srcObject = stream;
+
+          createPeerConnection();
+
+          stream
+            .getTracks()
+            .forEach(track => peerConnection.addTrack(track, stream));
+
+          return peerConnection.createOffer({
+            mandatory: { 
+              OfferToReceiveAudio: true,
+              OfferToReceiveVideo: true,
+            }
+          });
+        }).then((sessionDescription) => {
+          console.log('Offer created: ', sessionDescription);
+          peerConnection.setLocalDescription(sessionDescription);
+
+          POSTOfferSDP(sessionDescription);
+        }).catch((e) => {
+          console.error(e);
+        });
+      }
+
+      function answerCall(offerSDP) {
+        return navigator.mediaDevices.getUserMedia({
+          audio : true,
+          video : true,
+        }).then((stream) => {
+          console.log('getUserMedia successful');
+          localVideo.srcObject = stream;
+
+          createPeerConnection();
+          peerConnection.setRemoteDescription(offerSDP);
+
+          stream
+            .getTracks()
+            .forEach(track => peerConnection.addTrack(track, stream));
+
+          return peerConnection.createAnswer({
+            mandatory: { 
+              OfferToReceiveAudio: true,
+              OfferToReceiveVideo: true,
+            }
+          });
+        }).then((answerSDP) => {
+          console.log('Answer created: ', answerSDP);
+          peerConnection.setLocalDescription(answerSDP);
+
+          POSTAnswerSDP(answerSDP);
+        }).catch((e) => {
+          console.error(e);
+        });
+      }
+
+      function acceptAnswer(answerSDP) {
+        if (!peerConnection) {
+          console.error('Answer received at incorrect time.');
+          return;
+        }
+
+        peerConnection.setRemoteDescription(answerSDP);
+      }
+
+      function POSTIce(candidate) {
+        // Stub
+        console.log(`RPC: onICECandidateReceived(${JSON.stringify(candidate)})`);
+      }
+
+      function POSTOfferSDP(sdp) {
+        // Stub
+        console.log(`RPC: onRemoteDescRecieved(${JSON.stringify(sdp)})`);
+      }
+
+      function POSTAnswerSDP(sdp) {
+        // Stub
+        console.log(`RPC: onRemoteDescRecieved(${JSON.stringify(sdp)})`);
+      }
+
+      function onRemoteDescRecieved(SDP) {
+        if (!peerConnection) {
+          return answerCall(SDP);
+        } else {
+          return acceptAnswer(SDP);
+        }
+      }
+
+      function onICECandidateReceived(candidate) {
+        if (!peerConnection) {
+          console.error('Answer received at incorrect time.');
+          return;
+        }
+
+        return peerConnection.addIceCandidate(candidate);
+      }
+
+      callBtn.addEventListener('click', initiateCall);
+    </script>
+  </body>
+</html>
