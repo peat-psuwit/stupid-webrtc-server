@@ -31,6 +31,7 @@
       const hangupBtn = document.getElementById('hangup');
 
       let peerConnection;
+      let currentSelfId;
       let currentPeerId;
 
       function createPeerConnection() {
@@ -70,6 +71,11 @@
         const calleeId = calleeIdInput.value;
         if (calleeId.length !== 8) {
           alert('CalleeId must be 8 char long');
+          return Promise.reject();
+        }
+        
+        if (calleeId === currentSelfId) {
+          alert("Don't call yourself");
           return Promise.reject();
         }
 
@@ -158,6 +164,7 @@
       const socket = io();
 
       socket.on('connected', ({ selfId }) => {
+        currentSelfId = selfId;
         selfIdSpan.textContent = selfId;
       });
 
