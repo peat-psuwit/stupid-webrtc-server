@@ -110,15 +110,15 @@
       }
 
       function answerCall(offerSDP) {
+        createPeerConnection();
+        peerConnection.setRemoteDescription(offerSDP);
+
         return navigator.mediaDevices.getUserMedia({
           audio : true,
           video : true,
         }).then((stream) => {
           console.log('getUserMedia successful');
           localVideo.srcObject = stream;
-
-          createPeerConnection();
-          peerConnection.setRemoteDescription(offerSDP);
 
           stream
             .getTracks()
