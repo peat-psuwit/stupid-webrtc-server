@@ -149,6 +149,12 @@
         peerConnection.setRemoteDescription(answerSDP);
       }
 
+      function stopStreamTracks(stream) {
+        if (!stream) return;
+
+        stream.getTracks().forEach((track) => track.stop());
+      }
+
       function hangup() {
         if (peerConnection) {
           peerConnection.close();
@@ -157,7 +163,9 @@
 
         peerId = undefined;
 
+        stopStreamTracks(localVideo.srcObject);
         localVideo.srcObject = null;
+        stopStreamTracks(remoteVideo.srcObject);
         remoteVideo.srcObject = null;
       }
 
