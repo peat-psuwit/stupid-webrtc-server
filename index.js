@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    peer.emit('ice', { callerId: selfId, candidate });
+    peer.emit('ice', { peerId: selfId, candidate });
   });
 });
 
