@@ -14,6 +14,9 @@ const httpServer = http.createServer(function(req, res) {
     if (qPos = url.indexOf('?')) {
       url = url.substring(0, qPos);
     }
+    if (url === '') {
+      url = '/index.html';
+    }
     if (url.endsWith('/')) {
       url += 'index.html';
     }
