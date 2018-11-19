@@ -1,0 +1,8 @@
+{
+  "name": "stupid-webrtc-server",
+  "version": "0.0.1-DEV",
+  "main": "index.js",
+  "author": "Ratchanan Srirattanamet <peathot@hotmail.com>",
+  "license": "MIT",
+  "private": true
+}
