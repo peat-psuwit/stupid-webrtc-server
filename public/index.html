@@ -16,6 +16,7 @@
     <div>
       <input type="text" id="calleeId" />
       <button id="call">Initiate call</button>
+      <button id="hangup">Hang up</button>
     </div>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
@@ -27,6 +28,7 @@
       const selfIdSpan = document.getElementById('selfId');
       const calleeIdInput = document.getElementById('calleeId');
       const callBtn = document.getElementById('call');
+      const hangupBtn = document.getElementById('hangup');
 
       let peerConnection;
       let currentPeerId;
@@ -131,6 +133,18 @@
         peerConnection.setRemoteDescription(answerSDP);
       }
 
+      function hangup() {
+        if (peerConnection) {
+          peerConnection.close();
+          peerConnection = undefined;
+        }
+
+        peerId = undefined;
+
+        localVideo.srcObject = null;
+        remoteVideo.srcObject = null;
+      }
+
       const socket = io();
 
       socket.on('connected', ({ selfId }) => {
@@ -165,6 +179,7 @@
 
       socket.on('failure', ({ error }) => {
         console.error(error);
+        hangup();
       });
 
       function POSTIce(candidate) {
@@ -180,6 +195,7 @@
       }
 
       callBtn.addEventListener('click', initiateCall);
+      hangupBtn.addEventListener('click', hangup);
     </script>
   </body>
 </html>
