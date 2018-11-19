@@ -4,5 +4,8 @@
   "main": "index.js",
   "author": "Ratchanan Srirattanamet <peathot@hotmail.com>",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "socket.io": "^2.1.1"
+  }
 }
