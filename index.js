@@ -11,7 +11,7 @@ const basePath = `${__dirname}/public`;
 const httpServer = http.createServer(function(req, res) {
     let url = req.url;
     let qPos;
-    if (qPos = url.indexOf('?')) {
+    if ((qPos = url.indexOf('?')) !== -1) {
       url = url.substring(0, qPos);
     }
     if (url === '') {
