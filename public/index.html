@@ -19,20 +19,55 @@
       <button id="hangup">Hang up</button>
     </div>
 
+    <div>
+      Advance:
+      <input id="maxWidth" type="text" placeholder="Max width" />
+      x
+      <input id="maxHeight" type="text" placeholder="Max height" />
+      @
+      <input id="maxFps" type="text" placeholder="Max FPS" />
+    </div>
+
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script src="socket.io/socket.io.js"></script>
 
     <script>
       const localVideo = document.getElementById('localVideo');
       const remoteVideo = document.getElementById('remoteVideo');
+
       const selfIdSpan = document.getElementById('selfId');
+
       const calleeIdInput = document.getElementById('calleeId');
       const callBtn = document.getElementById('call');
       const hangupBtn = document.getElementById('hangup');
 
+      const maxWidthInput = document.getElementById('maxWidth');
+      const maxHeightInput = document.getElementById('maxHeight');
+      const maxFpsInput = document.getElementById('maxFps');
+
       let peerConnection;
       let currentSelfId;
       let currentPeerId;
+
+      function getUserMediaWithConstraint() {
+        const maxWidth = parseInt(maxWidthInput.value);
+        const maxHeight = parseInt(maxHeightInput.value);
+        const maxFrameRate = parseInt(maxFpsInput.value);
+
+        console.log(`Constraint: ${maxWidth}x${maxHeight}@${maxFrameRate}`);
+
+        return navigator.mediaDevices.getUserMedia({
+          audio : true,
+          video : {
+            mandatory : {
+              // Passing `undefined` here is not enough, hence this ugly hack
+              ...(maxWidth ? { maxWidth } : {}),
+              ...(maxHeight ? { maxHeight } : {}),
+              ...(maxFrameRate ? { maxFrameRate } : {}),
+            },
+          },
+        });
+      }
 
       function createPeerConnection() {
         peerConnection = new RTCPeerConnection({
@@ -80,10 +115,7 @@
         }
 
         currentPeerId = calleeId;
-        return navigator.mediaDevices.getUserMedia({
-          audio : true,
-          video : true,
-        }).then((stream) => {
+        return getUserMediaWithConstraint().then((stream) => {
           console.log('getUserMedia successful');
           localVideo.srcObject = stream;
 
@@ -113,10 +145,7 @@
         createPeerConnection();
         peerConnection.setRemoteDescription(offerSDP);
 
-        return navigator.mediaDevices.getUserMedia({
-          audio : true,
-          video : true,
-        }).then((stream) => {
+        return getUserMediaWithConstraint().then((stream) => {
           console.log('getUserMedia successful');
           localVideo.srcObject = stream;
 
